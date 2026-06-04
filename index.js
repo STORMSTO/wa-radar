@@ -13,7 +13,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     takeoverOnConflict: true,
     puppeteer: {
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/local/bin/chrome',
         headless: true,
         args: [
             '--no-sandbox',
