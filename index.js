@@ -13,6 +13,7 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     takeoverOnConflict: true,
     puppeteer: {
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
         headless: true,
         args: [
             '--no-sandbox',
@@ -47,10 +48,8 @@ client.on('ready', () => {
     if (fs.existsSync('./whatsapp-qr.png')) fs.unlinkSync('./whatsapp-qr.png');
 });
 
-// [تعديل هام] التقاط الرسالة فور وصولها وتخزينها
 client.on('message', async (msg) => {
-    // تخزين الرسائل النصية فقط حالياً
-    if (msg.hasMedia) return; // اختياري: تجاهل الوسائط لتوفير الذاكرة
+    if (msg.hasMedia) return;
 
     const contact = await msg.getContact();
     messageLog.set(msg.id.id, {
@@ -59,21 +58,16 @@ client.on('message', async (msg) => {
         time: new Date().toLocaleTimeString()
     });
 
-    // تنظيف الذاكرة
     if (messageLog.size > 500) {
         const firstKey = messageLog.keys().next().value;
         messageLog.delete(firstKey);
     }
 });
 
-// [تعديل هام] اكتشاف الحذف
 client.on('message_revoke_everyone', async (after, before) => {
     if (before && messageLog.has(before.id.id)) {
         const originalMsg = messageLog.get(before.id.id);
-        const text = `🚨 *Deleted Message Detected!*
-👤 *Sender:* ${originalMsg.sender}
-📩 *Message:* ${originalMsg.body}
-🕒 *Time:* ${originalMsg.time}`;
+        const text = `🚨 *Deleted Message Detected!*\n👤 *Sender:* ${originalMsg.sender}\n📩 *Message:* ${originalMsg.body}\n🕒 *Time:* ${originalMsg.time}`;
 
         try {
             await axios.post(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
